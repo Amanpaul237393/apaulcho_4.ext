@@ -1,0 +1,157 @@
+---
+title: "QMM Module 4"
+author: "Aman"
+date: "2024-09-21"
+output: html_document
+---
+
+
+#Installing Package lpsolve
+```{r}
+
+library(lpSolve)
+```
+
+```{r}
+## Coefficients of the objective function (profit per unit)
+profit <- c(420, 360, 300, 420, 360, 300, 420, 360, 300)
+print(profit)
+```
+
+#Constraints for the coefficient 
+
+# Production capacity constraints
+```{r}
+prod_cap <- matrix(c(
+  1, 1, 1, 0, 0, 0, 0, 0, 0,   # Plant 1
+  0, 0, 0, 1, 1, 1, 0, 0, 0,   # Plant 2
+  0, 0, 0, 0, 0, 0, 1, 1, 1    # Plant 3
+), nrow = 3, byrow = TRUE)
+
+print(prod_cap)
+
+```
+
+## Storage constraints
+```{r}
+storage <- matrix(c(
+  20, 15, 12, 0,  0,  0,  0,  0,  0,  # Plant 1
+   0,  0,  0, 20, 15, 12,  0,  0,  0,  # Plant 2
+   0,  0,  0,  0,  0,  0, 20, 15, 12  # Plant 3
+), nrow = 3, byrow = TRUE)
+
+print(storage)
+```
+
+## Sales constraints
+```{r}
+sales <- matrix(c(
+  1, 0, 0, 1, 0, 0, 1, 0, 0,  # Large size
+  0, 1, 0, 0, 1, 0, 0, 1, 0,  # Medium size
+  0, 0, 1, 0, 0, 1, 0, 0, 1   # Small size
+), nrow = 3, byrow = TRUE)
+
+print(sales)
+```
+
+
+## Equal capacity usage constraint(Percentage constraints)
+```{r}
+capacity_equal <- matrix(c(
+  1/750, 1/750, 1/750, -1/900, -1/900, -1/900, 0, 0, 0,
+  0, 0, 0, 1/900, 1/900, 1/900, -1/450, -1/450, -1/450
+), nrow = 2, byrow = TRUE)
+
+print(capacity_equal)
+```
+
+
+## Combine all constraints
+
+```{r}
+constraints <- rbind(prod_cap, storage, sales, capacity_equal)
+
+```
+
+## Right-hand-side of constraints
+```{r}
+rhs <- c(750, 900, 450, 13000, 12000, 5000, 900, 1200, 750, 0, 0)
+print(rhs)
+```
+
+## Directions of constraints
+```{r}
+dir <- c("<=", "<=", "<=", "<=", "<=", "<=", "<=", "<=", "<=", "=", "=")
+```
+
+## Solving the linear program
+```{r}
+solution <- lp("max", profit, constraints, dir, rhs)
+print(solution)
+```
+
+## Decision variables (Production quantities)
+```{r}
+solution$solution  # Optimal production plan
+```
+
+# Objective Function value (Maximum profit:)
+```{r}
+print(solution$objval)    # Maximum profit
+```
+
+
+
+#Summary 
+
+##Let X be the number of unit sized produced by the plants 
+```{r}
+# X11, X12, X13 = Production of large, medium, small units at plant 1.
+# X21, X22, X33 = Production of large, medium, small units at plant 2.
+# X31, X32, X33 = Production of large, medium, small units at plant 3.
+```
+
+$Max Z = 420(X11+X12+X13) + 360(X21+X22+X23)+300(X31+X32+X33)$
+
+#Capacity Constraints:
+
+$X11+X12+X13≤750$
+
+$X21+X22+X23≤900$
+
+$X31+X32+X33≤450$
+
+#Storage Constraints:
+
+$20X11+15X12+12X13≤1300$
+
+$20X21+15X22+12X23≤1200$
+
+$20X31+15X32+12X33≤5000$
+
+#Demand Constraints:
+
+$X11+X12+X13≤900$
+
+$X21+X22+X23≤1200$
+
+$X31+X32+X33≤750$
+
+#Percentage Constraints:
+
+$Plant 1: X11+ X12 +X13/750$
+
+$Plant 2: X21+ X22 +X23/900$
+
+$Plant 3: X31+ X32 +X33/450$
+
+$X11+ X12 +X13/750 = X21+ X22 +X23/900$ 
+
+$X21+ X22 +X23/900 = X31+ X32 +X33/450$
+
+#We can simplify the equation into-
+
+$900(X11+X12+X13)=750(X21+X22+X23), 450(X21+X22+X23)= 900(X31+X32+X33)$
+
+#Non-negativity Constraint:
+$X≥0$
